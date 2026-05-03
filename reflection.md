@@ -26,8 +26,9 @@ I did not add extra features like recurring tasks, breed, age, or time-of-day sc
 
 **b. Tradeoffs**
 
-- Describe one tradeoff your scheduler makes.
-- Why is that tradeoff reasonable for this scenario?
+One tradeoff in my scheduler is that the conflict detection only checks for exact time matches. For example, if two tasks are both scheduled at 08:00, the system gives a warning. However, it does not yet detect overlapping durations, such as one task from 08:00–08:30 and another starting at 08:15.
+
+I decided to keep this version because it is simple, readable, and easy to test. A more advanced version could compare start and end times, but that would make the logic more complex. For this project, exact-time conflict detection is enough to show the basic algorithm clearly.
 
 ---
 
