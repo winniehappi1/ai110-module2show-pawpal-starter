@@ -46,6 +46,4 @@ pip install -r requirements.txt
 ---
 ## 📸 Demo
 
-<a href="/course_images/ai110/pawpal_app.png" target="_blank">
-  <img src="/course_images/ai110/pawpal_app.png" width="600" alt="PawPal App"/>
-</a>
+![Pawpal App](course_images/ai110/pawpal_app.png)
