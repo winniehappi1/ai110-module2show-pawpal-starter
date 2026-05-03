@@ -216,3 +216,20 @@ class Scheduler:
                 )
         
         return conflicts
+    
+    def suggest_next_available_time(self, time: str) -> str:
+        """Suggest next available 30-min slot if time is taken."""
+        
+        taken_times = {task.time for task in self.tasks}
+
+        hour, minute = map(int, time.split(":"))
+
+        while time in taken_times:
+            minute += 30
+            if minute >= 60:
+                minute = 0
+                hour += 1
+
+            time = f"{hour:02d}:{minute:02d}"
+
+        return time

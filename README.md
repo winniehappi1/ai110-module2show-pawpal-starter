@@ -26,7 +26,11 @@ A busy pet owner needs help staying consistent with pet care. PawPal+ acts as an
 - Clear schedule explanation  
 - Interactive Streamlit UI  
 - Automated testing using `pytest`  
+- Suggests next available time slot when a conflict occurs
 
+## 🧩 System Architecture (UML)
+
+![PawPal UML](course_images/ai110/uml_final.png)
 ---
 
 ## 🛠️ How to Run the App

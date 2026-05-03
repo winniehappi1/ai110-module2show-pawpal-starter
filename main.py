@@ -10,10 +10,9 @@ def main():
     owner.add_pet(dog)
     owner.add_pet(cat)
 
-    # Add tasks (including a conflict at 08:00)
     dog.add_task(Task("Evening walk", 30, "medium", time="18:00"))
     dog.add_task(Task("Morning walk", 20, "high", time="08:00", frequency="daily"))
-    cat.add_task(Task("Feed Luna", 10, "high", time="08:00"))  # same time → conflict
+    cat.add_task(Task("Feed Luna", 10, "high", time="08:00"))  # conflict
     cat.add_task(Task("Play time", 15, "low", time="16:00"))
 
     scheduler = Scheduler(owner=owner, available_minutes=40)
@@ -29,6 +28,13 @@ def main():
             print("-", conflict)
     else:
         print("No conflicts found.")
+
+    print("\nSuggested Time Fixes:")
+    for task in scheduler.tasks:
+        suggested_time = scheduler.suggest_next_available_time(task.time)
+
+        if suggested_time != task.time:
+            print(f"- {task.title} is scheduled at {task.time}. Suggested new time: {suggested_time}")
 
     print("\nIncomplete Tasks:")
     for task in scheduler.filter_tasks_by_status(False):

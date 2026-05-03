@@ -44,6 +44,22 @@ st.markdown(
     unsafe_allow_html=True
 )
 
+
+def format_priority(priority):
+    if priority == "high":
+        return "🔴 High"
+    elif priority == "medium":
+        return "🟡 Medium"
+    else:
+        return "🟢 Low"
+
+
+def format_status(completed):
+    if completed:
+        return "✅ Complete"
+    return "⏳ Incomplete"
+
+
 # 🐾 HEADER
 st.title("🐾 PawPal+")
 
@@ -105,7 +121,18 @@ if st.button("➕ Add task"):
 
 if st.session_state.tasks:
     st.write("Current tasks:")
-    st.table(st.session_state.tasks)
+    st.table(
+        [
+            {
+                "Time": task["time"],
+                "Task": task["title"],
+                "Duration": task["duration_minutes"],
+                "Priority": format_priority(task["priority"]),
+                "Frequency": task["frequency"]
+            }
+            for task in st.session_state.tasks
+        ]
+    )
 else:
     st.info("No tasks yet. Add one above.")
 
@@ -140,6 +167,16 @@ if st.button("🚀 Generate schedule"):
         st.warning("⚠️ Schedule conflict detected:")
         for conflict in conflicts:
             st.warning(conflict)
+
+        st.markdown("### 💡 Suggested Time Fixes")
+        for task in scheduler.tasks:
+            suggested_time = scheduler.suggest_next_available_time(task.time)
+
+            if suggested_time != task.time:
+                st.info(
+                    f"{task.title} is scheduled at {task.time}. "
+                    f"Suggested new time: {suggested_time}"
+                )
     else:
         st.success("✅ No schedule conflicts detected.")
 
@@ -151,8 +188,8 @@ if st.button("🚀 Generate schedule"):
                 "Time": task.time,
                 "Task": task.title,
                 "Duration": task.duration_minutes,
-                "Priority": task.priority,
-                "Status": "Complete" if task.completed else "Incomplete",
+                "Priority": format_priority(task.priority),
+                "Status": format_status(task.completed),
                 "Frequency": task.frequency
             }
             for task in scheduler.sort_by_time()
@@ -164,7 +201,7 @@ if st.button("🚀 Generate schedule"):
 
     if schedule:
         for task in schedule:
-            st.success(task.get_info())
+            st.success(f"{format_priority(task.priority)} — {task.get_info()}")
     else:
         st.error("No tasks fit within the available time.")
 
@@ -174,7 +211,7 @@ if st.button("🚀 Generate schedule"):
         st.markdown("### ⛔ Unscheduled Tasks")
         st.warning("Some tasks did not fit within the available time:")
         for task in unscheduled:
-            st.warning(task.get_info())
+            st.warning(f"{format_priority(task.priority)} — {task.get_info()}")
 
     # 💡 EXPLANATION
     st.markdown("### 💡 Explanation")
