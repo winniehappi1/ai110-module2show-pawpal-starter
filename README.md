@@ -41,6 +41,7 @@ A busy pet owner needs help staying consistent with pet care. PawPal+ acts as an
 python -m venv .venv
 source .venv/bin/activate   # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
+```
 
 ---
 ## 📸 Demo
