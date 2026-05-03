@@ -1,4 +1,5 @@
 from dataclasses import dataclass, field
+from typing import List
 
 
 VALID_PRIORITIES = ["low", "medium", "high"]
@@ -6,84 +7,101 @@ VALID_PRIORITIES = ["low", "medium", "high"]
 
 @dataclass
 class Task:
+    """Represents one pet care task."""
+
     title: str
     duration_minutes: int
     priority: str
 
     def __post_init__(self):
+        """Validate task duration and priority after creation."""
         if self.duration_minutes <= 0:
             raise ValueError("Duration must be greater than 0 minutes.")
         if self.priority not in VALID_PRIORITIES:
             raise ValueError("Priority must be low, medium, or high.")
 
-    def get_info(self):
+    def get_info(self) -> str:
+        """Return a formatted description of the task."""
         return f"{self.title} ({self.duration_minutes} min, {self.priority} priority)"
 
 
 @dataclass
 class Pet:
+    """Represents a pet and its care tasks."""
+
     name: str
     species: str
-    tasks: list[Task] = field(default_factory=list)
+    tasks: List[Task] = field(default_factory=list)
 
-    def add_task(self, task: Task):
+    def add_task(self, task: Task) -> None:
+        """Add a task to this pet."""
         if not isinstance(task, Task):
             raise ValueError("Only Task objects can be added.")
         self.tasks.append(task)
 
-    def view_tasks(self):
+    def view_tasks(self) -> List[str]:
+        """Return all task descriptions for this pet."""
         return [task.get_info() for task in self.tasks]
 
 
 @dataclass
 class Owner:
+    """Represents an owner with one or more pets."""
+
     name: str
     preferences: str = ""
-    pets: list[Pet] = field(default_factory=list)
+    pets: List[Pet] = field(default_factory=list)
 
-    def add_pet(self, pet: Pet):
+    def add_pet(self, pet: Pet) -> None:
+        """Add a pet to the owner."""
         if not isinstance(pet, Pet):
             raise ValueError("Only Pet objects can be added.")
         self.pets.append(pet)
 
-    def view_pets(self):
+    def view_pets(self) -> List[str]:
+        """Return all pets owned by the owner."""
         return [f"{pet.name} ({pet.species})" for pet in self.pets]
 
 
 @dataclass
 class Scheduler:
-    tasks: list[Task]
+    """Creates a daily plan from an owner's pet tasks."""
+
+    owner: Owner
     available_minutes: int
+    tasks: List[Task] = field(init=False)
 
-    def sort_tasks(self):
-        priority_order = {"high": 3, "medium": 2, "low": 1}
-        return sorted(
-            self.tasks,
-            key=lambda task: priority_order[task.priority],
-            reverse=True
-        )
+    def __post_init__(self):
+        """Collect and sort tasks after the scheduler is created."""
+        self.tasks = self._get_all_tasks()
+        self.sort_tasks()
 
-    def generate_schedule(self):
+    def _get_all_tasks(self) -> List[Task]:
+        """Get all tasks from all pets owned by the owner."""
+        all_tasks = []
+        for pet in self.owner.pets:
+            all_tasks.extend(pet.tasks)
+        return all_tasks
+
+    def sort_tasks(self) -> None:
+        """Sort tasks by priority from high to low."""
+        priority_order = {"high": 0, "medium": 1, "low": 2}
+        self.tasks.sort(key=lambda t: priority_order[t.priority])
+
+    def generate_schedule(self) -> List[Task]:
+        """Generate a schedule based on priority and time limit."""
         schedule = []
-        used_minutes = 0
-
-        for task in self.sort_tasks():
-            if used_minutes + task.duration_minutes <= self.available_minutes:
+        total_time = 0
+        for task in self.tasks:
+            if total_time + task.duration_minutes <= self.available_minutes:
                 schedule.append(task)
-                used_minutes += task.duration_minutes
-
+                total_time += task.duration_minutes
         return schedule
 
-    def explain_plan(self):
+    def explain_plan(self) -> str:
+        """Explain why the schedule was created."""
         schedule = self.generate_schedule()
-        total_minutes = sum(task.duration_minutes for task in schedule)
-
+        total_time = sum(task.duration_minutes for task in schedule)
         if not schedule:
-            return "No tasks could fit into the available time."
-
-        task_names = ", ".join(task.title for task in schedule)
-        return (
-            f"The schedule includes {task_names}. "
-            f"These tasks take {total_minutes} minutes total and were chosen based on priority "
-            f"and the available time limit of {self.available_minutes} minutes."
-        )
+            return f"No tasks could be scheduled within your {self.available_minutes} minute limit."
+        return f"Selected {len(schedule)} task(s) totaling {total_time} minutes because they fit within your {self.available_minutes} minute limit, prioritizing high-priority tasks first."
