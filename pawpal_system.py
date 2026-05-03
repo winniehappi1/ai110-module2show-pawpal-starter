@@ -1,8 +1,10 @@
 from dataclasses import dataclass, field
 from typing import List
+from datetime import date, timedelta
 
 
 VALID_PRIORITIES = ["low", "medium", "high"]
+VALID_FREQUENCIES = ["once", "daily", "weekly"]
 
 
 @dataclass
@@ -12,19 +14,28 @@ class Task:
     title: str
     duration_minutes: int
     priority: str
+    time: str = "09:00"
     completed: bool = False
+    frequency: str = "once"
+    due_date: date = field(default_factory=date.today)
 
     def __post_init__(self):
-        """Validate task duration and priority after creation."""
+        """Validate task information after creation."""
         if self.duration_minutes <= 0:
             raise ValueError("Duration must be greater than 0 minutes.")
         if self.priority not in VALID_PRIORITIES:
             raise ValueError("Priority must be low, medium, or high.")
+        if self.frequency not in VALID_FREQUENCIES:
+            raise ValueError("Frequency must be once, daily, or weekly.")
 
     def get_info(self) -> str:
         """Return a formatted description of the task."""
         status = "complete" if self.completed else "incomplete"
-        return f"{self.title} ({self.duration_minutes} min, {self.priority} priority, {status})"
+        return (
+            f"{self.time} - {self.title} "
+            f"({self.duration_minutes} min, {self.priority} priority, "
+            f"{status}, {self.frequency})"
+        )
 
     def mark_complete(self) -> None:
         """Mark the task as complete."""
@@ -33,6 +44,24 @@ class Task:
     def mark_incomplete(self) -> None:
         """Mark the task as incomplete."""
         self.completed = False
+
+    def create_next_occurrence(self):
+        """Create the next task if this task repeats."""
+        if self.frequency == "daily":
+            next_date = self.due_date + timedelta(days=1)
+        elif self.frequency == "weekly":
+            next_date = self.due_date + timedelta(weeks=1)
+        else:
+            return None
+
+        return Task(
+            title=self.title,
+            duration_minutes=self.duration_minutes,
+            priority=self.priority,
+            time=self.time,
+            frequency=self.frequency,
+            due_date=next_date
+        )
 
 
 @dataclass
@@ -98,6 +127,21 @@ class Scheduler:
         priority_order = {"high": 0, "medium": 1, "low": 2}
         self.tasks.sort(key=lambda t: (priority_order[t.priority], t.duration_minutes))
 
+    def sort_by_time(self) -> List[Task]:
+        """Return tasks sorted by time."""
+        return sorted(self.tasks, key=lambda task: task.time)
+
+    def filter_tasks_by_status(self, completed: bool) -> List[Task]:
+        """Return tasks based on completion status."""
+        return [task for task in self.tasks if task.completed == completed]
+
+    def filter_tasks_by_pet(self, pet_name: str) -> List[Task]:
+        """Return tasks for one pet."""
+        for pet in self.owner.pets:
+            if pet.name.lower() == pet_name.lower():
+                return pet.tasks
+        return []
+
     def generate_schedule(self) -> List[Task]:
         """Generate a schedule based on priority, duration, and time limit."""
         schedule = []
@@ -122,6 +166,21 @@ class Scheduler:
             task for task in self.tasks
             if not task.completed and task.title not in scheduled_titles
         ]
+
+    def complete_task(self, task: Task):
+        """Complete a task and create the next one if it repeats."""
+        task.mark_complete()
+        next_task = task.create_next_occurrence()
+
+        if next_task:
+            for pet in self.owner.pets:
+                if task in pet.tasks:
+                    pet.add_task(next_task)
+                    self.tasks = self._get_all_tasks()
+                    self.sort_tasks()
+                    return next_task
+
+        return None
 
     def explain_plan(self) -> str:
         """Explain why the schedule was created."""
