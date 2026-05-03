@@ -195,3 +195,17 @@ class Scheduler:
             f"within your {self.available_minutes} minute limit, prioritizing high-priority "
             f"and shorter tasks first."
         )
+    def detect_conflicts(self) -> List[str]:
+        """Return warning messages for tasks scheduled at the same time."""
+        conflicts = []
+        seen_times = {}
+
+        for task in self.tasks:
+            if task.time in seen_times:
+                conflicts.append(
+                    f"Conflict: '{task.title}' and '{seen_times[task.time]}' are both scheduled at {task.time}."
+                )
+            else:
+                seen_times[task.time] = task.title
+
+        return conflicts
