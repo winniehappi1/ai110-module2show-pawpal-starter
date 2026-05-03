@@ -42,6 +42,7 @@ python -m venv .venv
 source .venv/bin/activate   # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 
+---
 ## 📸 Demo
 
 <a href="/course_images/ai110/pawpal_app.png" target="_blank">

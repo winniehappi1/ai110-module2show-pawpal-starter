@@ -117,7 +117,7 @@ If I had more time, I would test:
 
 ### a. What went well
 
-I am most satisfied with the scheduling logic and how everything connects together. The system can now sort, filter, detect conflicts, and handle recurring tasks.
+I am most satisfied with the scheduling logic and how everything connects together. The system can now sort, filter, detect conflicts, and handle recurring tasks. I extended the scheduler by adding a feature that suggests the next available time slot when a conflict occurs. This improves usability by helping users quickly adjust their schedule.
 
 ---
 
