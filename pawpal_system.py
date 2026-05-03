@@ -12,6 +12,7 @@ class Task:
     title: str
     duration_minutes: int
     priority: str
+    completed: bool = False
 
     def __post_init__(self):
         """Validate task duration and priority after creation."""
@@ -22,7 +23,16 @@ class Task:
 
     def get_info(self) -> str:
         """Return a formatted description of the task."""
-        return f"{self.title} ({self.duration_minutes} min, {self.priority} priority)"
+        status = "complete" if self.completed else "incomplete"
+        return f"{self.title} ({self.duration_minutes} min, {self.priority} priority, {status})"
+
+    def mark_complete(self) -> None:
+        """Mark the task as complete."""
+        self.completed = True
+
+    def mark_incomplete(self) -> None:
+        """Mark the task as incomplete."""
+        self.completed = False
 
 
 @dataclass
@@ -84,24 +94,45 @@ class Scheduler:
         return all_tasks
 
     def sort_tasks(self) -> None:
-        """Sort tasks by priority from high to low."""
+        """Sort tasks by priority and duration."""
         priority_order = {"high": 0, "medium": 1, "low": 2}
-        self.tasks.sort(key=lambda t: priority_order[t.priority])
+        self.tasks.sort(key=lambda t: (priority_order[t.priority], t.duration_minutes))
 
     def generate_schedule(self) -> List[Task]:
-        """Generate a schedule based on priority and time limit."""
+        """Generate a schedule based on priority, duration, and time limit."""
         schedule = []
         total_time = 0
+
         for task in self.tasks:
+            if task.completed:
+                continue
+
             if total_time + task.duration_minutes <= self.available_minutes:
                 schedule.append(task)
                 total_time += task.duration_minutes
+
         return schedule
+
+    def get_unscheduled_tasks(self) -> List[Task]:
+        """Return incomplete tasks that could not fit in the schedule."""
+        schedule = self.generate_schedule()
+        scheduled_titles = [task.title for task in schedule]
+
+        return [
+            task for task in self.tasks
+            if not task.completed and task.title not in scheduled_titles
+        ]
 
     def explain_plan(self) -> str:
         """Explain why the schedule was created."""
         schedule = self.generate_schedule()
         total_time = sum(task.duration_minutes for task in schedule)
+
         if not schedule:
             return f"No tasks could be scheduled within your {self.available_minutes} minute limit."
-        return f"Selected {len(schedule)} task(s) totaling {total_time} minutes because they fit within your {self.available_minutes} minute limit, prioritizing high-priority tasks first."
+
+        return (
+            f"Selected {len(schedule)} task(s) totaling {total_time} minutes because they fit "
+            f"within your {self.available_minutes} minute limit, prioritizing high-priority "
+            f"and shorter tasks first."
+        )
